@@ -18,13 +18,13 @@ import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Web image cache
+ * Image cache
  */
 public class WebImageCache {
 
     private static final String TAG = "WebImageCache";
 
-    private static final String DISK_CACHE_PATH = "/smart_web_image_cache/";
+    private static final String DISK_CACHE_PATH = "/strong_web_image_cache/";
 
     private ConcurrentHashMap<String, SoftReference<Bitmap>> memoryCache;
     private String diskCachePath;
@@ -62,7 +62,8 @@ public class WebImageCache {
 
             // 磁盘中存在图片, 加入内存
             if (bitmap != null) {
-                cacheBitmapToMemory(url, bitmap);
+                memoryCache.put(getCacheKey(url), new SoftReference<Bitmap>(bitmap));
+                return bitmap;
             } else {
                 // 从网络下载图片数据, 保存到文件中
                 downloadImgFromNetwork(url);
@@ -103,16 +104,6 @@ public class WebImageCache {
                 }
             }
         }
-    }
-
-    /**
-     * 保存 bitmap 到内存
-     *
-     * @param url
-     * @param bitmap
-     */
-    private void cacheBitmapToMemory(final String url, final Bitmap bitmap) {
-        memoryCache.put(getCacheKey(url), new SoftReference<Bitmap>(bitmap));
     }
 
     /**

@@ -32,7 +32,6 @@ public class StrongImageView extends ImageView {
         return (StrongImageView) viewById;
     }
 
-
     // Helpers to set image by URL
     public void setImageUrl(String url) {
         setImage(new WebImage(url));

@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 /**
- * #请替换掉这里的东东#
+ * sharedPreferences config
  * <p/>
  * User: erhu
  * Date: 13-4-22
@@ -18,9 +18,9 @@ public class Config {
     private static final String PREF = "STRONG_IMAGE_CONFIG";
 
     /**
-     * 保存当前 文件 大小 的sampleSize, 保压缩图片使用;
+     * 保存当前 文件 大小 的sampleSize, 保压缩图片使用
      *
-     * @param _image_size  单位 KB
+     * @param _image_size  KB
      * @param _sample_size
      */
     public static void setImageSampleSize(Context _context, long _image_size, int _sample_size) {
@@ -36,8 +36,7 @@ public class Config {
     /**
      * 根据图片文件大小, 获取压缩比例
      *
-     * @param _image_size
-     * @return
+     * @param _image_size KB
      */
     public static int getImageSampleSize(Context _context, long _image_size) {
         long size_k = convertByte2HK(_image_size);
