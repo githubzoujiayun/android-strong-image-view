@@ -15,7 +15,7 @@ public class TestActivity extends Activity {
         setContentView(R.layout.main);
 
         StrongImageView world_map_iv = (StrongImageView) findViewById(R.id.bg_3);
-        world_map_iv.setImageUrl("bg_3.png");
+        world_map_iv.setImageUrl("http://img.lequshi.com/desk/3729/y_1343358336.jpg");
 
     }
 }
