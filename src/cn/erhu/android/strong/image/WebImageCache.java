@@ -1,6 +1,5 @@
 package cn.erhu.android.strong.image;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.http.AndroidHttpClient;
@@ -27,49 +26,50 @@ public class WebImageCache {
     private static final String DISK_CACHE_PATH = "/strong_web_image_cache/";
 
     private ConcurrentHashMap<String, SoftReference<Bitmap>> memoryCache;
-    private String diskCachePath;
+
     private boolean diskCacheEnabled = false;
 
-    // 重试下载图片次数
-    private int retryTimes;
-    private static final int maxRetryTimes = 3;
+    private static ImageCacheKeyStrategy cacheKeyStrategy = new ImageCacheKeyStrategyImpl();
 
-    public WebImageCache(Context context) {
+    public WebImageCache() {
         memoryCache = new ConcurrentHashMap<String, SoftReference<Bitmap>>();
 
-        Context app_context = context.getApplicationContext();
-        diskCachePath = app_context.getCacheDir().getAbsolutePath() + DISK_CACHE_PATH;
-
-        File outFile = new File(diskCachePath);
+        File outFile = new File(DISK_CACHE_PATH);
         outFile.mkdirs();
 
         diskCacheEnabled = outFile.exists();
     }
 
-    public Bitmap get(Context _context, final String url) {
-        // 重试(递归结束条件)
-        if (retryTimes++ >= maxRetryTimes) {
-            retryTimes = 0;
-            return null;
-        }
+    public Bitmap get(final String _url, int _width, int _height, boolean _from_memory) {
 
-        // 检查内存中是否有图片
-        Bitmap bitmap = getBitmapFromMemory(url);
+        Bitmap bitmap = null;
+
+        // 检查内存
+        if (_from_memory) {
+            bitmap = getBitmapFromMemory(_url);
+        }
 
         // 检查磁盘中是否存在图片
         if (bitmap == null) {
-            bitmap = getBitmapFromDisk(_context, url);
+            bitmap = getBitmapFromDisk(_url, _width, _height);
 
             // 磁盘中存在图片, 加入内存
             if (bitmap != null) {
-                memoryCache.put(getCacheKey(url), new SoftReference<Bitmap>(bitmap));
+                Log.d(TAG, String.format("从 '磁盘' 读取图片:%s", _url));
+                memoryCache.put(cacheKeyStrategy.genKey(_url), new SoftReference<Bitmap>(bitmap));
                 return bitmap;
             } else {
                 // 从网络下载图片数据, 保存到文件中
-                downloadImgFromNetwork(url);
-                // 递归调用, 重新获取图片
-                return get(_context, url);
+                downloadImgFromNetwork(_url);
+                bitmap = getBitmapFromDisk(_url, _width, _height);
+                if (bitmap != null) {
+                    Log.d(TAG, String.format("从 '网络' 下载图片:%s", _url));
+                    memoryCache.put(cacheKeyStrategy.genKey(_url), new SoftReference<Bitmap>(bitmap));
+                    return bitmap;
+                }
             }
+        } else {
+            Log.d(TAG, String.format("从 '内存' 读取图片:%s", _url));
         }
 
         return bitmap;
@@ -81,9 +81,9 @@ public class WebImageCache {
     public void remove(String url) {
         if (url == null) return;
 
-        memoryCache.remove(getCacheKey(url));
+        memoryCache.remove(cacheKeyStrategy.genKey(url));
 
-        File f = new File(diskCachePath, getCacheKey(url));
+        File f = new File(DISK_CACHE_PATH, cacheKeyStrategy.genKey(url));
         if (f.exists() && f.isFile()) {
             f.delete();
         }
@@ -95,7 +95,7 @@ public class WebImageCache {
     public void clear() {
         memoryCache.clear();
 
-        File cachedFileDir = new File(diskCachePath);
+        File cachedFileDir = new File(DISK_CACHE_PATH);
         if (cachedFileDir.exists() && cachedFileDir.isDirectory()) {
             File[] cachedFiles = cachedFileDir.listFiles();
             for (File f : cachedFiles) {
@@ -113,7 +113,7 @@ public class WebImageCache {
      */
     private Bitmap getBitmapFromMemory(String url) {
         Bitmap bitmap = null;
-        SoftReference<Bitmap> softRef = memoryCache.get(getCacheKey(url));
+        SoftReference<Bitmap> softRef = memoryCache.get(cacheKeyStrategy.genKey(url));
 
         if (softRef != null) {
             bitmap = softRef.get();
@@ -127,7 +127,7 @@ public class WebImageCache {
      *
      * @param _url
      */
-    private Bitmap getBitmapFromDisk(Context _context, String _url) {
+    private Bitmap getBitmapFromDisk(String _url, int _width, int _height) {
         Bitmap bit_map = null;
 
         if (diskCacheEnabled) {
@@ -135,30 +135,25 @@ public class WebImageCache {
             File file = new File(file_path);
 
             if (file.exists()) {
-                long file_size = file.length();
-                bit_map = decodeFile(_context, file_path, file_size);
+                bit_map = decodeFile(file_path, _width, _height);
             }
         }
         return bit_map;
     }
 
+    /**
+     * 获取缓存文件路径
+     *
+     * @param url
+     */
     private String getFilePath(String url) {
-        return diskCachePath + getCacheKey(url);
-    }
-
-    private String getCacheKey(String url) {
-        if (url == null) {
-            throw new RuntimeException("图片路径为空");
-        } else {
-            return url.replaceAll("[.:/,%?&=]", "+").replaceAll("[+]+", "+");
-        }
+        return DISK_CACHE_PATH + cacheKeyStrategy.genKey(url);
     }
 
     /**
      * 从网络取图片
      */
     private void downloadImgFromNetwork(final String _url) {
-        Log.d(TAG, "从网络下载图片： ".concat(_url));
 
         final AndroidHttpClient client = AndroidHttpClient.newInstance("Android");
         final HttpGet getRequest = new HttpGet(_url);
@@ -233,30 +228,37 @@ public class WebImageCache {
     /**
      * 根据 图片文件路径 取BITMAP对象
      */
-    private static Bitmap decodeFile(Context _context, String _file_path, long _file_size) {
-        // 根据文件大小, 计算压缩比例.(默认值为1)
-        int sample_size = Config.getImageSampleSize(_context, _file_size);
+    private static Bitmap decodeFile(String _file_path_name, int _width, int _height) {
+
+        Log.d(TAG, String.format("StrongImageView 实际尺寸: {width:%d, height:%d}", _width, _height));
 
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(_file_path, opts);
-        opts.inSampleSize = sample_size;
+        BitmapFactory.decodeFile(_file_path_name, opts);
+
+        Log.d(TAG, String.format("图片实际尺寸: {width:%d, height:%d}", opts.outWidth, opts.outHeight));
+
+        float scale = 1;
+        // 图片实际尺寸是要显示尺寸的2倍以上
+        while (opts.outWidth / (scale * 2) >= _width && opts.outHeight / (scale * 2) >= _height) {
+            scale *= 2;
+        }
+        Log.d(TAG, String.format("压缩比率: %d", (int) scale));
+
+        opts.inSampleSize = (int) scale;
         opts.inJustDecodeBounds = false;
-        Bitmap bmp = null;
 
         try {
-            bmp = BitmapFactory.decodeFile(_file_path, opts);
-            return bmp;
+            return BitmapFactory.decodeFile(_file_path_name, opts);
         } catch (OutOfMemoryError err) {
-            Log.d(TAG, "哦~~~ 图片太大了, 我们来压缩一下吧.");
+            Log.d(TAG, "Oh~~~ 图片太大了, 我们来压缩一下吧.");
 
-            // 设置 inSampleSize = inSampleSize * 2
-            // 只内存溢出一次, 保存当前文件尺寸的图片手机阀值, 下次提高压缩比;
-            Config.setImageSampleSize(_context, _file_size, sample_size << 1);
-            return decodeFile(_context, _file_path, _file_size);
+            // 减半宽度和高度
+            return decodeFile(_file_path_name, _width / 2, _height / 2);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return bmp;
+        return null;
     }
+
 }

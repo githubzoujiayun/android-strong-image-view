@@ -1,6 +1,5 @@
 package cn.erhu.android.strong.image;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
@@ -12,7 +11,6 @@ public class StrongImageTask implements Runnable {
     private boolean cancelled = false;
     private OnCompleteHandler onCompleteHandler;
     private StrongImage image;
-    private Context context;
 
     public static class OnCompleteHandler extends Handler {
         @Override
@@ -30,16 +28,14 @@ public class StrongImageTask implements Runnable {
         public abstract void onComplete();
     }
 
-    public StrongImageTask(Context _context, StrongImage _image) {
+    public StrongImageTask(StrongImage _image) {
         this.image = _image;
-        this.context = _context;
     }
 
     @Override
     public void run() {
         if (image != null) {
-            complete(image.getBitmap(context));
-            context = null;
+            complete(image.getBitmap());
         }
     }
 

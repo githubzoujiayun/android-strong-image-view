@@ -11,10 +11,14 @@ import java.util.concurrent.Executors;
 
 public class StrongImageView extends ImageView {
 
+    private static final String TAG = "StrongImageView";
+
     private static final int LOADING_THREADS = 4;
     private static ExecutorService threadPool = Executors.newFixedThreadPool(LOADING_THREADS);
 
     private StrongImageTask currentTask;
+    private int minWidth;
+    private int minHeight;
 
     public StrongImageView(Context context) {
         super(context);
@@ -22,6 +26,8 @@ public class StrongImageView extends ImageView {
 
     public StrongImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        minHeight = this.getSuggestedMinimumHeight();
+        minWidth = this.getSuggestedMinimumWidth();
     }
 
     public StrongImageView(Context context, AttributeSet attrs, int defStyle) {
@@ -34,7 +40,18 @@ public class StrongImageView extends ImageView {
 
     // Helpers to set image by URL
     public void setImageUrl(String url) {
-        setImage(new WebImage(url));
+        setImage(new WebImage(url, minWidth, minHeight, true));
+    }
+
+    /**
+     * 设置图片URL
+     *
+     * @param url
+     * @param _from_memory 是否读取内存数据
+     *                     从内存读取时, 可能读取到的是压缩后的数据, 因此在显示大图时, 设置_from_memory = false;
+     */
+    public void setImageUrl(String url, boolean _from_memory) {
+        setImage(new WebImage(url, minWidth, minHeight, _from_memory));
     }
 
     public void setImageUrl(String url, StrongImageTask.OnCompleteListener completeListener) {
@@ -91,7 +108,7 @@ public class StrongImageView extends ImageView {
         }
 
         // 启动任务去下载图片
-        currentTask = new StrongImageTask(getContext(), image);
+        currentTask = new StrongImageTask(image);
         currentTask.setOnCompleteHandler(new StrongImageTask.OnCompleteHandler() {
             @Override
             public void onComplete(Bitmap bitmap) {

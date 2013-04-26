@@ -1,11 +1,13 @@
 package cn.erhu.android.strong.image;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 
 public class WebImage implements StrongImage {
 
     private static WebImageCache webImageCache;
+    private int minHeight;
+    private int minWidth;
+    private boolean fromMemory;
 
     private String url;
 
@@ -13,14 +15,21 @@ public class WebImage implements StrongImage {
         this.url = url;
     }
 
-    public Bitmap getBitmap(Context context) {
+    public WebImage(String _url, int _min_width, int _min_height, boolean _from_memory) {
+        this.url = _url;
+        this.minWidth = _min_width;
+        this.minHeight = _min_height;
+        this.fromMemory = _from_memory;
+    }
+
+    public Bitmap getBitmap() {
         // Don't leak context
         if (webImageCache == null) {
-            webImageCache = new WebImageCache(context);
+            webImageCache = new WebImageCache();
         }
 
         if (url != null) {
-            return webImageCache.get(context, url);
+            return webImageCache.get(url, minWidth, minHeight, fromMemory);
         }
 
         return null;
