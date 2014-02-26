@@ -3,11 +3,9 @@
               android:orientation="vertical"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent">
-    <cn.erhu.android.strong.image.StrongImageView android:id="@+id/bg_3"
-                                                  android:layout_width="wrap_content"
-                                                  android:layout_height="wrap_content"
-                                                  android:minHeight="300dp"
-                                                  android:minWidth="300dp"
-            />
+    <ListView android:id="@+id/demo_lv"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    </ListView>
 </LinearLayout>
 

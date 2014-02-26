@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="80dp">
+
+    <TextView android:id="@+id/item_name"
+              android:layout_width="100dp"
+              android:layout_height="match_parent"
+              android:text="demo"
+              android:gravity="center"
+              android:background="@android:color/holo_blue_dark"
+              android:layout_margin="10dp"/>
+
+    <com.erhu.android.component.strongimageview.StrongImageView
+            android:id="@+id/item_image"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_launcher"
+            android:minWidth="200dp"
+            android:minHeight="80dp"/>
+</LinearLayout>
