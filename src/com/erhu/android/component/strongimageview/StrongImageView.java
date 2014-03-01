@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
+import com.erhu.android.component.BitmapLoader;
 
 /**
  * StrongImageView
@@ -48,16 +49,10 @@ public class StrongImageView extends ImageView {
         if (bitmap != null) {
             setImageBitmap(bitmap);
         } else {
-            Log.d(StrongImageViewConstants.TAG, "downloadBitmap, url = " + imageUrl);
-
-            loader.downloadBitmap(this, imageUrl, new LoadImageCallback() {
-                @Override
-                public void onComplete(Bitmap _bitmap) {
-                    if (_bitmap != null) {
-                        setImageBitmap(_bitmap);
-                    }
-                }
-            });
+            if (StrongImageViewConstants.IS_DEBUG) {
+                Log.d(StrongImageViewConstants.TAG, "downloadBitmap, url = " + imageUrl);
+            }
+            loader.downloadBitmap(this, imageUrl);
         }
     }
 

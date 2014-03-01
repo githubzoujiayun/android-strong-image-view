@@ -2,7 +2,8 @@ package com.erhu.android.component.strongimageview;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import java.io.File;
@@ -25,29 +26,89 @@ public abstract class AbstractBitmapLoader {
 
     private static final int CACHE_SIZE = 50;
     private Map<String, SoftReference<Bitmap>> imageCache = null;
-    private final Map<String, AsyncTask> taskMap;
-    private static final String dir = StorageUtil.getInstance().getAlbumDir();
+    private final Map<String, Runnable> taskMap;
+    private static final String dir = StorageUtil.getInstance().getImgDir();
     protected ImageCacheNameStrategy imgNameStrategy;
 
     protected abstract void setImageCacheNameStrategy();
 
     public AbstractBitmapLoader() {
         imageCache = new HashMap<String, SoftReference<Bitmap>>(CACHE_SIZE);
-        taskMap = new HashMap<String, AsyncTask>(CACHE_SIZE);
+        taskMap = new HashMap<String, Runnable>(CACHE_SIZE);
         setImageCacheNameStrategy();
     }
 
-    public void downloadBitmap(StrongImageView _strong_image_view,
-                               String url,
-                               LoadImageCallback _load_image_callback) {
-        if (!taskMap.containsKey(url)) {
-            DownloadImageTask task = new DownloadImageTask(_strong_image_view, _load_image_callback);
+    public void downloadBitmap(final StrongImageView _strong_image_view,
+                               String _url) {
+        if (_strong_image_view == null || _url == null ||
+                _url.trim().equals("")) {
+            return;
+        }
+
+        int min_width = _strong_image_view.getMinWidth();
+        int min_height = _strong_image_view.getMinHeight();
+
+        if (!taskMap.containsKey(_url)) {
+            DownloadImgTask task = new DownloadImgTask(new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    if (msg != null) {
+                        Bitmap bitmap = (Bitmap) msg.obj;
+                        if (bitmap != null) {
+                            _strong_image_view.setImageBitmap(bitmap);
+                        }
+                    }
+                }
+            }, _url, min_width, min_height);
+
             synchronized (taskMap) {
-                taskMap.put(url, task);
+                taskMap.put(_url, task);
             }
-            task.execute(url);
+
+            ThreadPool.getExecutor().execute(task);
         }
     }
+
+    class DownloadImgTask implements Runnable {
+
+        private Handler handler;
+        private String url;
+        private int width;
+        private int height;
+
+        public DownloadImgTask(Handler _handler, String url, int minWidth, int minHeight) {
+            handler = _handler;
+            this.url = url;
+            this.width = minWidth;
+            this.height = minHeight;
+        }
+
+        @Override
+        public void run() {
+            Bitmap bitmap = buildAdaptiveBitmapFromImgUrl(url, width, height);
+            if (bitmap != null) {
+                writeDataToFile(bitmap, url);
+            }
+            synchronized (taskMap) {
+                taskMap.remove(url);
+            }
+
+            imageCache.put(url, new SoftReference<Bitmap>(bitmap));
+
+            while (imageCache.size() > CACHE_SIZE) {
+                Iterator<String> iterator = imageCache.keySet().iterator();
+                if (iterator.hasNext()) {
+                    imageCache.remove(iterator.next());
+                }
+            }
+
+            // send msg
+            Message msg = handler.obtainMessage();
+            msg.obj = bitmap;
+            handler.sendMessage(msg);
+        }
+    }
+
 
     public Bitmap loadBitmap(final String _image_url, final int _min_width, final int _min_height) {
 
@@ -89,68 +150,6 @@ public abstract class AbstractBitmapLoader {
             }
         }
         return null;
-    }
-
-    /**
-     * 下载图片的任务
-     */
-    class DownloadImageTask extends AsyncTask<String, Integer, Bitmap> {
-
-        private String imageUrl;
-        private int minWidth;
-        private int minHeight;
-        private LoadImageCallback loadImageCallback;
-
-        public DownloadImageTask(StrongImageView _strong_image_view, LoadImageCallback _load_image_callback) {
-            minWidth = _strong_image_view.getMinWidth();
-            minHeight = _strong_image_view.getMinHeight();
-            loadImageCallback = _load_image_callback;
-        }
-
-        @Override
-        protected Bitmap doInBackground(String... params) {
-            if (params.length == 0) {
-                return null;
-            }
-
-            imageUrl = params[0];
-            if (StrongImageViewConstants.IS_DEBUG) {
-                Log.d(StrongImageViewConstants.TAG, "download image: " + imageUrl + " from web.");
-            }
-
-            Bitmap bitmap = buildAdaptiveBitmapFromImgUrl(imageUrl, minWidth, minHeight);
-            if (bitmap != null) {
-                writeDataToFile(bitmap, imageUrl);
-            }
-
-            return bitmap;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (bitmap != null) {
-                synchronized (taskMap) {
-                    taskMap.remove(imageUrl);
-                }
-                imageCache.put(imageUrl, new SoftReference<Bitmap>(bitmap));
-
-                while (imageCache.size() > CACHE_SIZE) {
-                    Iterator<String> iterator = imageCache.keySet().iterator();
-                    if (iterator.hasNext()) {
-                        imageCache.remove(iterator.next());
-                    }
-                }
-                loadImageCallback.onComplete(bitmap);
-            }
-            //notifyObservers();
-        }
-
-        @Override
-        protected void onCancelled() {
-            synchronized (taskMap) {
-                taskMap.remove(imageUrl);
-            }
-        }
     }
 
     private Bitmap buildAdaptiveBitmapFromImgUrl(final String _image_url, int minWidth, int minHeight) {
@@ -267,7 +266,7 @@ public abstract class AbstractBitmapLoader {
         // 如果用户设置了最小宽和最小高
         if (_min_width != 0 && _min_height != 0) {
             while (_opts.outWidth / _min_width >= (sample_size * 2)
-                    || _opts.outHeight / _min_height >= (sample_size * 2)) {
+                    && _opts.outHeight / _min_height >= (sample_size * 2)) {
                 if (StrongImageViewConstants.IS_DEBUG) {
                     Log.d(StrongImageViewConstants.TAG, "bitmap is too large, when sample_size = " + sample_size + ", enlarge it.");
                 }

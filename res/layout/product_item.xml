@@ -17,7 +17,6 @@
             android:id="@+id/item_image"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:src="@drawable/ic_launcher"
-            android:minWidth="200dp"
-            android:minHeight="80dp"/>
+            android:minWidth="400dp"
+            android:minHeight="300dp"/>
 </LinearLayout>

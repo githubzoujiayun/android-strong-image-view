@@ -22,7 +22,7 @@ public class StorageUtil {
     private HashMap<STORAGE_TYPE, File> storageLocations;
 
     private static final String STORAGE_ROOT = "strong_image_cache";
-    private String albumDir;
+    private String imgDir;
 
     /**
      * 存储类型 *
@@ -239,8 +239,8 @@ public class StorageUtil {
     public void initBizPathValues() {
         String pre = getPath().concat(File.separator).concat(STORAGE_ROOT).concat(File.separator);
         makeDirIfNotExist(pre);
-        albumDir = pre.concat("album").concat(File.separator);
-        makeDirIfNotExist(albumDir);
+        imgDir = pre.concat("album").concat(File.separator);
+        makeDirIfNotExist(imgDir);
     }
 
     private void makeDirIfNotExist(String path) {
@@ -269,7 +269,7 @@ public class StorageUtil {
         return getPath(getCurrentUseStorage());
     }
 
-    public String getAlbumDir() {
-        return albumDir;
+    public String getImgDir() {
+        return imgDir;
     }
 }

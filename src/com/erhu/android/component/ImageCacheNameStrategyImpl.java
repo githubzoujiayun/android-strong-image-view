@@ -1,4 +1,6 @@
-package com.erhu.android.component.strongimageview;
+package com.erhu.android.component;
+
+import com.erhu.android.component.strongimageview.ImageCacheNameStrategy;
 
 /**
  * URL 与 缓存文件名称的对应关系

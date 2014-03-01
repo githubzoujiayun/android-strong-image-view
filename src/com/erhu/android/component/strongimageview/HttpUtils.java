@@ -5,7 +5,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * #请替换掉这里的东东#
+ * HttpUtils
  * <p/>
  * User: erhu
  * Date: 14-2-23

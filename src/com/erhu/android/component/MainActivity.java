@@ -82,7 +82,7 @@ public class MainActivity extends Activity {
 
             holder.nameTv.setText(products.get(position).name);
             //String image_url = "http://images.apple.com/cn/macbook-pro/images/overview_hero.jpg";
-            String image_url = products.get(position).url;//"http://192.168.1.105:8000/bs.jpg";
+            String image_url = products.get(position).url;
             final StrongImageView item_image = holder.imageIv;
             item_image.loadImage(image_url);
             return convertView;
