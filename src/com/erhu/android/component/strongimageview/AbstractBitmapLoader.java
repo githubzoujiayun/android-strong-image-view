@@ -52,17 +52,21 @@ public abstract class AbstractBitmapLoader {
         setImageCacheNameStrategy();
     }
 
-    public void downloadBitmap(final StrongImageView _strong_image_view,
-                               String _url) {
-        if (_strong_image_view == null || _url == null ||
-                _url.trim().equals("")) {
+    public void downloadBitmap(final StrongImageView _strong_image_view) {
+        if (_strong_image_view == null) {
+            return;
+        }
+
+        String url = _strong_image_view.getImageUrl();
+
+        if (url == null || url.trim().equals("")) {
             return;
         }
 
         int min_width = _strong_image_view.getMinWidth();
         int min_height = _strong_image_view.getMinHeight();
 
-        if (!taskMap.containsKey(_url)) {
+        if (!taskMap.containsKey(url)) {
             DownloadImgTask task = new DownloadImgTask(new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
@@ -73,10 +77,10 @@ public abstract class AbstractBitmapLoader {
                         }
                     }
                 }
-            }, _url, min_width, min_height);
+            }, url, min_width, min_height);
 
             synchronized (taskMap) {
-                taskMap.put(_url, task);
+                taskMap.put(url, task);
             }
 
             ThreadPool.getExecutor().execute(task);
@@ -117,14 +121,18 @@ public abstract class AbstractBitmapLoader {
     }
 
 
-    public Bitmap loadBitmap(final String _image_url, final int _min_width, final int _min_height) {
+    public Bitmap loadBitmap(final StrongImageView _strong_image_view) {
 
-        if (_image_url == null || _image_url.trim().isEmpty()) {
+        if (_strong_image_view == null) {
             return null;
         }
 
+        String image_url = _strong_image_view.getImageUrl();
+        int min_width = _strong_image_view.getMinWidth();
+        int min_height = _strong_image_view.getMinHeight();
+
         // in cache
-        SoftReference<Bitmap> reference = lruImgCache.get(_image_url);
+        SoftReference<Bitmap> reference = lruImgCache.get(image_url);
 
         if (reference != null) {
             Bitmap bitmap = reference.get();
@@ -137,7 +145,7 @@ public abstract class AbstractBitmapLoader {
         } else {
 
             // in file system.
-            String bitmap_name = imgNameStrategy.getName(_image_url);
+            String bitmap_name = imgNameStrategy.getName(image_url);
             File[] cached_files = new File(dir).listFiles();
             int index = 0;
 
@@ -152,8 +160,8 @@ public abstract class AbstractBitmapLoader {
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(StrongImageViewConstants.TAG, "load image from local file");
                     }
-                    Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + bitmap_name, _min_width, _min_height);
-                    lruImgCache.put(_image_url, new SoftReference<Bitmap>(bitmap));
+                    Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + bitmap_name, min_width, min_height);
+                    lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
                     return bitmap;
                 }
             }

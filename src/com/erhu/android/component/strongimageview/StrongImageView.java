@@ -39,20 +39,24 @@ public class StrongImageView extends ImageView {
         imageUrl = _url;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
     public void loadImage(String _url) {
         setImageUrl(_url);
         loadImage();
     }
 
     private void loadImage() {
-        Bitmap bitmap = loader.loadBitmap(imageUrl, minWidth, minHeight);
+        Bitmap bitmap = loader.loadBitmap(this);
         if (bitmap != null) {
             setImageBitmap(bitmap);
         } else {
             if (StrongImageViewConstants.IS_DEBUG) {
                 Log.d(StrongImageViewConstants.TAG, "downloadBitmap, url = " + imageUrl);
             }
-            loader.downloadBitmap(this, imageUrl);
+            loader.downloadBitmap(this);
         }
     }
 
