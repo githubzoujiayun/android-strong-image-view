@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.util.LruCache;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -24,8 +24,8 @@ import java.util.Map;
  */
 public abstract class AbstractBitmapLoader {
 
-    private static final int CACHE_SIZE = 50;
-    private Map<String, SoftReference<Bitmap>> imageCache = null;
+    private static final int TASK_SIZE = 20;
+    private LruCache<String, SoftReference<Bitmap>> lruImgCache = null;
     private final Map<String, Runnable> taskMap;
     private static final String dir = StorageUtil.getInstance().getImgDir();
     protected ImageCacheNameStrategy imgNameStrategy;
@@ -33,8 +33,22 @@ public abstract class AbstractBitmapLoader {
     protected abstract void setImageCacheNameStrategy();
 
     public AbstractBitmapLoader() {
-        imageCache = new HashMap<String, SoftReference<Bitmap>>(CACHE_SIZE);
-        taskMap = new HashMap<String, Runnable>(CACHE_SIZE);
+        int max_memory = (int) Runtime.getRuntime().maxMemory();
+
+        // ?
+        int cache_size = max_memory / 8;
+        lruImgCache = new LruCache<String, SoftReference<Bitmap>>(cache_size) {
+            @Override
+            protected int sizeOf(String key, SoftReference<Bitmap> value) {
+                Bitmap bitmap = value.get();
+                if (bitmap != null) {
+                    return bitmap.getRowBytes() * bitmap.getHeight();
+                }
+                return super.sizeOf(key, value);
+            }
+        };
+
+        taskMap = new HashMap<String, Runnable>(TASK_SIZE);
         setImageCacheNameStrategy();
     }
 
@@ -93,14 +107,7 @@ public abstract class AbstractBitmapLoader {
                 taskMap.remove(url);
             }
 
-            imageCache.put(url, new SoftReference<Bitmap>(bitmap));
-
-            while (imageCache.size() > CACHE_SIZE) {
-                Iterator<String> iterator = imageCache.keySet().iterator();
-                if (iterator.hasNext()) {
-                    imageCache.remove(iterator.next());
-                }
-            }
+            lruImgCache.put(url, new SoftReference<Bitmap>(bitmap));
 
             // send msg
             Message msg = handler.obtainMessage();
@@ -117,8 +124,9 @@ public abstract class AbstractBitmapLoader {
         }
 
         // in cache
-        if (imageCache.containsKey(_image_url)) {
-            SoftReference<Bitmap> reference = imageCache.get(_image_url);
+        SoftReference<Bitmap> reference = lruImgCache.get(_image_url);
+
+        if (reference != null) {
             Bitmap bitmap = reference.get();
             if (bitmap != null) {
                 if (StrongImageViewConstants.IS_DEBUG) {
@@ -127,6 +135,7 @@ public abstract class AbstractBitmapLoader {
                 return bitmap;
             }
         } else {
+
             // in file system.
             String bitmap_name = imgNameStrategy.getName(_image_url);
             File[] cached_files = new File(dir).listFiles();
@@ -144,7 +153,7 @@ public abstract class AbstractBitmapLoader {
                         Log.d(StrongImageViewConstants.TAG, "load image from local file");
                     }
                     Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + bitmap_name, _min_width, _min_height);
-                    imageCache.put(_image_url, new SoftReference<Bitmap>(bitmap));
+                    lruImgCache.put(_image_url, new SoftReference<Bitmap>(bitmap));
                     return bitmap;
                 }
             }
@@ -162,7 +171,6 @@ public abstract class AbstractBitmapLoader {
         }
 
         Bitmap bitmap = null;
-
         int max_try_loop = 10;
 
         try {
@@ -322,5 +330,4 @@ public abstract class AbstractBitmapLoader {
             }
         }
     }
-
 }
