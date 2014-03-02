@@ -83,7 +83,7 @@ public abstract class AbstractBitmapLoader {
                 taskMap.put(url, task);
             }
 
-            ThreadPool.getExecutor().execute(task);
+            StrongImageThreadPool.getExecutor().execute(task);
         }
     }
 

@@ -4,30 +4,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * ThreadPool
+ * StrongImageThreadPool
  * <p/>
  * User: erhu
  * Date: 14-3-1
  * Time: 下午4:24
  */
-public class ThreadPool {
+public class StrongImageThreadPool {
 
     private static ExecutorService threadPool;
 
     public static ExecutorService getExecutor() {
-        int pool_size = Runtime.getRuntime().availableProcessors() * 2 + 1;
-
         if (threadPool == null) {
-            synchronized (ThreadPool.class) {
+            synchronized (StrongImageThreadPool.class) {
                 if (threadPool == null) {
-                    threadPool = Executors.newFixedThreadPool(pool_size);
+                    // when short time async task, use cachedThreadPool.
+                    threadPool = Executors.newCachedThreadPool();
                 }
             }
         } else {
             if (threadPool.isShutdown()) {
-                synchronized (ThreadPool.class) {
+                synchronized (StrongImageThreadPool.class) {
                     if (threadPool.isShutdown()) {
-                        threadPool = Executors.newFixedThreadPool(pool_size);
+                        threadPool = Executors.newCachedThreadPool();
                     }
                 }
             }
@@ -35,15 +34,4 @@ public class ThreadPool {
 
         return threadPool;
     }
-
-    /**
-     * 销毁这个线程池，有潜在的危险，但是。。。。 可以忽略
-     */
-    public static void destroyPool() {
-        if (threadPool != null) {
-            threadPool.shutdown();
-            threadPool = null;
-        }
-    }
-
 }
