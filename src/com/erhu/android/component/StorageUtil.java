@@ -1,4 +1,4 @@
-package com.erhu.android.component.strongimageview;
+package com.erhu.android.component;
 
 import android.os.Environment;
 import android.os.StatFs;

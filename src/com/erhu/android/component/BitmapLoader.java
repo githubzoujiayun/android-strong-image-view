@@ -28,4 +28,9 @@ public class BitmapLoader extends AbstractBitmapLoader {
         super.imgNameStrategy = new ImageCacheNameStrategyImpl();
     }
 
+    @Override
+    protected void setImageCacheDirStrategy() {
+        super.imgCacheDirStrategy = new ImageCacheDirStrategyImpl();
+    }
+
 }

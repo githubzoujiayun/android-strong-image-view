@@ -27,10 +27,13 @@ public abstract class AbstractBitmapLoader {
     private static final int TASK_SIZE = 20;
     private LruCache<String, SoftReference<Bitmap>> lruImgCache = null;
     private final Map<String, Runnable> taskMap;
-    private static final String dir = StorageUtil.getInstance().getImgDir();
+    private static String dir;
     protected ImageCacheNameStrategy imgNameStrategy;
+    protected ImageCacheDirStrategy imgCacheDirStrategy;
 
     protected abstract void setImageCacheNameStrategy();
+
+    protected abstract void setImageCacheDirStrategy();
 
     public AbstractBitmapLoader() {
         int max_memory = (int) Runtime.getRuntime().maxMemory();
@@ -49,7 +52,11 @@ public abstract class AbstractBitmapLoader {
         };
 
         taskMap = new HashMap<String, Runnable>(TASK_SIZE);
+
         setImageCacheNameStrategy();
+        setImageCacheDirStrategy();
+
+        dir = imgCacheDirStrategy.dir();
     }
 
     public void downloadBitmap(final StrongImageView _strong_image_view) {
@@ -122,7 +129,6 @@ public abstract class AbstractBitmapLoader {
 
 
     public Bitmap loadBitmap(final StrongImageView _strong_image_view) {
-
         if (_strong_image_view == null) {
             return null;
         }
@@ -145,14 +151,14 @@ public abstract class AbstractBitmapLoader {
         } else {
 
             // in file system.
-            String bitmap_name = imgNameStrategy.getName(image_url);
+            String file_name = imgNameStrategy.getName(image_url);
             File[] cached_files = new File(dir).listFiles();
             int index = 0;
 
             if (null != cached_files) {
                 for (; index < cached_files.length; index++) {
                     // file existed
-                    if (bitmap_name.equals(cached_files[index].getName())) {
+                    if (file_name.equals(cached_files[index].getName())) {
                         break;
                     }
                 }
@@ -160,7 +166,7 @@ public abstract class AbstractBitmapLoader {
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(StrongImageViewConstants.TAG, "load image from local file");
                     }
-                    Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + bitmap_name, min_width, min_height);
+                    Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + file_name, min_width, min_height);
                     lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
                     return bitmap;
                 }
