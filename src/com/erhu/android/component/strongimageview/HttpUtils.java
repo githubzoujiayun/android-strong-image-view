@@ -1,5 +1,6 @@
 package com.erhu.android.component.strongimageview;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -14,16 +15,24 @@ import java.net.URL;
 public class HttpUtils {
 
     public static InputStream getStreamFromURL(String imageURL) {
-        InputStream in = null;
+        try {
+            return getStreamUseURLConn(imageURL);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static InputStream getStreamUseURLConn(String imageURL) throws IOException {
+        InputStream stream = null;
         try {
             URL url = new URL(imageURL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            in = connection.getInputStream();
+            stream = connection.getInputStream();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return in;
-
+        return stream;
     }
 }

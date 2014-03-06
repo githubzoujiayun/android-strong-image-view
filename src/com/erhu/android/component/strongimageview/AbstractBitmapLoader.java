@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,9 +25,11 @@ import java.util.Map;
  */
 public abstract class AbstractBitmapLoader {
 
-    private static final int TASK_SIZE = 20;
+    private static final String TAG = "AbstractBitmapLoader";
+
+    private static final int JOB_SIZE = 20;
     private LruCache<String, SoftReference<Bitmap>> lruImgCache = null;
-    private final Map<String, Runnable> taskMap;
+    private final Map<String, Runnable> jobs;
     private static String dir;
     protected ImageCacheNameStrategy imgNameStrategy;
     protected ImageCacheDirStrategy imgCacheDirStrategy;
@@ -45,13 +48,18 @@ public abstract class AbstractBitmapLoader {
             protected int sizeOf(String key, SoftReference<Bitmap> value) {
                 Bitmap bitmap = value.get();
                 if (bitmap != null) {
-                    return bitmap.getRowBytes() * bitmap.getHeight();
+
+                    int bitmap_size = bitmap.getRowBytes() * bitmap.getHeight();
+                    if (StrongImageViewConstants.IS_DEBUG) {
+                        Log.d(TAG, "bitmap_size = " + bitmap_size);
+                    }
+                    return bitmap_size;
                 }
                 return super.sizeOf(key, value);
             }
         };
 
-        taskMap = new HashMap<String, Runnable>(TASK_SIZE);
+        jobs = Collections.synchronizedMap(new HashMap<String, Runnable>(JOB_SIZE));
 
         setImageCacheNameStrategy();
         setImageCacheDirStrategy();
@@ -73,7 +81,7 @@ public abstract class AbstractBitmapLoader {
         int min_width = _strong_image_view.getMinWidth();
         int min_height = _strong_image_view.getMinHeight();
 
-        if (!taskMap.containsKey(url)) {
+        if (!jobs.containsKey(url)) {
             DownloadImgTask task = new DownloadImgTask(new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
@@ -86,9 +94,7 @@ public abstract class AbstractBitmapLoader {
                 }
             }, url, min_width, min_height);
 
-            synchronized (taskMap) {
-                taskMap.put(url, task);
-            }
+            jobs.put(url, task);
 
             StrongImageThreadPool.getExecutor().execute(task);
         }
@@ -114,9 +120,8 @@ public abstract class AbstractBitmapLoader {
             if (bitmap != null) {
                 writeDataToFile(bitmap, url);
             }
-            synchronized (taskMap) {
-                taskMap.remove(url);
-            }
+
+            jobs.remove(url);
 
             lruImgCache.put(url, new SoftReference<Bitmap>(bitmap));
 

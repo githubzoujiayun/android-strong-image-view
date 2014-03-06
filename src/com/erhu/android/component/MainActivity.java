@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
 
         ListView demoLv = (ListView) findViewById(R.id.demo_lv);
         products = new ArrayList<Product>();
+        products.add(new Product("iPhone1", "http://images.apple.com/cn/macbook-pro/images/overview_hero.jpg"));
         products.add(new Product("iPhone1", "http://photo.meile.com/d07/GJ/23/p_gjekb503376b_460.jpeg"));
         products.add(new Product("iPhone2", "http://photo.meile.com/d76/64/36/p_6447c3793c4c_460.jpeg"));
         products.add(new Product("iPhone3", "http://photo.meile.com/d17/WN/75/p_wndf13670711_460.jpeg"));
@@ -81,7 +82,6 @@ public class MainActivity extends Activity {
             }*/
 
             holder.nameTv.setText(products.get(position).name);
-            //String image_url = "http://images.apple.com/cn/macbook-pro/images/overview_hero.jpg";
             String image_url = products.get(position).url;
             final StrongImageView item_image = holder.imageIv;
             item_image.loadImage(image_url);

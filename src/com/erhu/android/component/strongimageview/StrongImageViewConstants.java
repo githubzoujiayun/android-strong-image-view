@@ -8,6 +8,7 @@ package com.erhu.android.component.strongimageview;
  * Time: 下午3:06
  */
 public interface StrongImageViewConstants {
-    boolean IS_DEBUG = false;
+    boolean IS_DEBUG = true;
+
     String TAG = "StrongImageView";
 }
