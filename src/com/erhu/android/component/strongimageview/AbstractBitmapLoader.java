@@ -39,9 +39,12 @@ public abstract class AbstractBitmapLoader {
     protected abstract void setImageCacheDirStrategy();
 
     public AbstractBitmapLoader() {
-        int max_memory = (int) Runtime.getRuntime().maxMemory();
 
-        // ?
+        // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
+        // LruCache通过构造函数传入缓存值（KB）
+        int max_memory = (int) Runtime.getRuntime().maxMemory() / 1024;
+
+        // 使用最大可用内存值的1/8作为缓存的大小
         int cache_size = max_memory / 8;
         lruImgCache = new LruCache<String, SoftReference<Bitmap>>(cache_size) {
             @Override
@@ -49,7 +52,7 @@ public abstract class AbstractBitmapLoader {
                 Bitmap bitmap = value.get();
                 if (bitmap != null) {
 
-                    int bitmap_size = bitmap.getRowBytes() * bitmap.getHeight();
+                    int bitmap_size =bitmap.getByteCount() / 1024;
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(TAG, "bitmap_size = " + bitmap_size);
                     }
