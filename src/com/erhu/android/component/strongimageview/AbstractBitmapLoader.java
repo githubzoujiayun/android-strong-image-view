@@ -52,7 +52,7 @@ public abstract class AbstractBitmapLoader {
                 Bitmap bitmap = value.get();
                 if (bitmap != null) {
 
-                    int bitmap_size =bitmap.getByteCount() / 1024;
+                    int bitmap_size = bitmap.getByteCount() / 1024;
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(TAG, "bitmap_size = " + bitmap_size);
                     }
@@ -119,19 +119,24 @@ public abstract class AbstractBitmapLoader {
 
         @Override
         public void run() {
-            Bitmap bitmap = buildAdaptiveBitmapFromImgUrl(url, width, height);
+            String file_name = dir + imgNameStrategy.getName(url);
+            HttpUtils.downloadImg(url, file_name);
+            Bitmap bitmap = buildAdaptiveBitmapFromFilePath(file_name, width, height);
+
             if (bitmap != null) {
-                writeDataToFile(bitmap, url);
+                //buildAdaptiveBitmapFromImgUrl(url, width, height);
+                jobs.remove(url);
+                try{
+                    lruImgCache.put(url, new SoftReference<Bitmap>(bitmap));
+                }catch(Exception e) {
+                    e.printStackTrace();
+                }
+
+                // send msg
+                Message msg = handler.obtainMessage();
+                msg.obj = bitmap;
+                handler.sendMessage(msg);
             }
-
-            jobs.remove(url);
-
-            lruImgCache.put(url, new SoftReference<Bitmap>(bitmap));
-
-            // send msg
-            Message msg = handler.obtainMessage();
-            msg.obj = bitmap;
-            handler.sendMessage(msg);
         }
     }
 
@@ -175,7 +180,11 @@ public abstract class AbstractBitmapLoader {
                         Log.d(StrongImageViewConstants.TAG, "load image from local file");
                     }
                     Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + file_name, min_width, min_height);
-                    lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
+                    try {
+                        lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
+                    }catch(Exception e) {
+                        e.printStackTrace();
+                    }
                     return bitmap;
                 }
             }

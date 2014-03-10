@@ -68,7 +68,7 @@ public class MainActivity extends Activity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
-            //if (convertView == null) {
+            if (convertView == null) {
                 //Log.d(TAG, "convertView is null, inflate a new one");
 
                 convertView = getLayoutInflater().inflate(R.layout.product_item, null);
@@ -76,10 +76,10 @@ public class MainActivity extends Activity {
                 holder.nameTv = (TextView) convertView.findViewById(R.id.item_name);
                 holder.imageIv = (StrongImageView) convertView.findViewById(R.id.item_image);
                 convertView.setTag(holder);
-            /*} else {
+            } else {
                 //Log.d(TAG, "convertView is not null, get UI component from viewHolder.");
                 holder = (ViewHolder) convertView.getTag();
-            }*/
+            }
 
             holder.nameTv.setText(products.get(position).name);
             String image_url = products.get(position).url;
