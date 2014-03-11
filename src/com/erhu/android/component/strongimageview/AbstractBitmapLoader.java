@@ -12,9 +12,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AsyncBitmapLoader
@@ -28,7 +28,29 @@ public abstract class AbstractBitmapLoader {
     private static final String TAG = "AbstractBitmapLoader";
 
     private static final int JOB_SIZE = 20;
-    private LruCache<String, SoftReference<Bitmap>> lruImgCache = null;
+
+    private final HashMap<String, Boolean> diskCache = new HashMap<String, Boolean>();
+
+    // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
+    // LruCache通过构造函数传入缓存值（KB）
+    // 使用最大可用内存值的1/8作为缓存的大小
+    private final LruCache<String, SoftReference<Bitmap>> lruImgCache =
+            new LruCache<String, SoftReference<Bitmap>>((int) Runtime.getRuntime().maxMemory() / 1024 / 8) {
+                @Override
+                protected int sizeOf(String key, SoftReference<Bitmap> value) {
+                    Bitmap bitmap = value.get();
+                    if (bitmap != null) {
+
+                        int bitmap_size = bitmap.getByteCount() / 1024;
+                        if (StrongImageViewConstants.IS_DEBUG) {
+                            Log.d(TAG, "bitmap_size = " + bitmap_size);
+                        }
+                        return bitmap_size;
+                    }
+                    return 0;
+                }
+            };
+
     private final Map<String, Runnable> jobs;
     private static String dir;
     protected ImageCacheNameStrategy imgNameStrategy;
@@ -39,34 +61,10 @@ public abstract class AbstractBitmapLoader {
     protected abstract void setImageCacheDirStrategy();
 
     public AbstractBitmapLoader() {
-
-        // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
-        // LruCache通过构造函数传入缓存值（KB）
-        int max_memory = (int) Runtime.getRuntime().maxMemory() / 1024;
-
-        // 使用最大可用内存值的1/8作为缓存的大小
-        int cache_size = max_memory / 8;
-        lruImgCache = new LruCache<String, SoftReference<Bitmap>>(cache_size) {
-            @Override
-            protected int sizeOf(String key, SoftReference<Bitmap> value) {
-                Bitmap bitmap = value.get();
-                if (bitmap != null) {
-
-                    int bitmap_size = bitmap.getByteCount() / 1024;
-                    if (StrongImageViewConstants.IS_DEBUG) {
-                        Log.d(TAG, "bitmap_size = " + bitmap_size);
-                    }
-                    return bitmap_size;
-                }
-                return super.sizeOf(key, value);
-            }
-        };
-
-        jobs = Collections.synchronizedMap(new HashMap<String, Runnable>(JOB_SIZE));
-
         setImageCacheNameStrategy();
         setImageCacheDirStrategy();
 
+        jobs = new ConcurrentHashMap<String, Runnable>(JOB_SIZE);
         dir = imgCacheDirStrategy.dir();
     }
 
@@ -119,23 +117,25 @@ public abstract class AbstractBitmapLoader {
 
         @Override
         public void run() {
-            String file_name = dir + imgNameStrategy.getName(url);
-            HttpUtils.downloadImg(url, file_name);
-            Bitmap bitmap = buildAdaptiveBitmapFromFilePath(file_name, width, height);
+            try {
+                String file_name = dir + imgNameStrategy.getName(url);
+                HttpUtils.downloadImg(url, file_name);
+                Bitmap bitmap = buildAdaptiveBitmapFromFilePath(file_name, width, height);
 
-            if (bitmap != null) {
-                //buildAdaptiveBitmapFromImgUrl(url, width, height);
-                jobs.remove(url);
-                try{
+                if (bitmap != null) {
+                    //buildAdaptiveBitmapFromImgUrl(url, width, height);
+                    jobs.remove(url);
+
+                    diskCache.put(url, true);
                     lruImgCache.put(url, new SoftReference<Bitmap>(bitmap));
-                }catch(Exception e) {
-                    e.printStackTrace();
-                }
 
-                // send msg
-                Message msg = handler.obtainMessage();
-                msg.obj = bitmap;
-                handler.sendMessage(msg);
+                    // send msg
+                    Message msg = handler.obtainMessage();
+                    msg.obj = bitmap;
+                    handler.sendMessage(msg);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -162,31 +162,30 @@ public abstract class AbstractBitmapLoader {
                 return bitmap;
             }
         } else {
-
-            // in file system.
             String file_name = imgNameStrategy.getName(image_url);
-            File[] cached_files = new File(dir).listFiles();
-            int index = 0;
 
-            if (null != cached_files) {
-                for (; index < cached_files.length; index++) {
-                    // file existed
-                    if (file_name.equals(cached_files[index].getName())) {
-                        break;
-                    }
-                }
-                if (index < cached_files.length) {
-                    if (StrongImageViewConstants.IS_DEBUG) {
-                        Log.d(StrongImageViewConstants.TAG, "load image from local file");
-                    }
+            try {
+                if (diskCache.get(image_url)) {
+                    // 不用检查文件是否存在
                     Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + file_name, min_width, min_height);
-                    try {
-                        lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
-                    }catch(Exception e) {
-                        e.printStackTrace();
-                    }
+                    lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
                     return bitmap;
+                } else {
+
+                    // in file system.
+                    if (new File(dir + file_name).exists()) {
+                        if (StrongImageViewConstants.IS_DEBUG) {
+                            Log.d(StrongImageViewConstants.TAG, "load image from local file");
+                        }
+                        Bitmap bitmap = buildAdaptiveBitmapFromFilePath(dir + file_name, min_width, min_height);
+
+                        lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
+                        diskCache.put(image_url, true);
+                        return bitmap;
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return null;
@@ -275,7 +274,7 @@ public abstract class AbstractBitmapLoader {
         while (max_try_loop-- >= 0) {
             try {
                 if (StrongImageViewConstants.IS_DEBUG) {
-                    Log.d(StrongImageViewConstants.TAG, "Now, sample_size = " + sample_size);
+                    //Log.d(StrongImageViewConstants.TAG, "Now, sample_size = " + sample_size);
                 }
                 BitmapFactory.Options options = buildBFOptions(sample_size);
                 bitmap = BitmapFactory.decodeFile(_file_path, options);
@@ -312,9 +311,11 @@ public abstract class AbstractBitmapLoader {
                 sample_size *= 2;
             }
             if (StrongImageViewConstants.IS_DEBUG) {
+                /*
                 Log.d(StrongImageViewConstants.TAG, String.format("视图尺寸: {width:%d, height:%d}", _min_width, _min_height));
                 Log.d(StrongImageViewConstants.TAG, String.format("图片尺寸: {width:%d, height:%d}", _opts.outWidth, _opts.outHeight));
                 Log.d(StrongImageViewConstants.TAG, String.format("压缩比率: %d", sample_size));
+                */
             }
         }
         return sample_size;
