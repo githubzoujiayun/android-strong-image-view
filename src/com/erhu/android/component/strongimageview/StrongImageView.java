@@ -1,9 +1,7 @@
 package com.erhu.android.component.strongimageview;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.ImageView;
 import com.erhu.android.component.BitmapLoader;
 
@@ -19,7 +17,6 @@ public class StrongImageView extends ImageView {
     private String imageUrl;
     private int minWidth;
     private int minHeight;
-    private AbstractBitmapLoader loader = BitmapLoader.getInstance();
 
     public StrongImageView(Context context) {
         super(context);
@@ -49,15 +46,7 @@ public class StrongImageView extends ImageView {
     }
 
     private void loadImage() {
-        Bitmap bitmap = loader.loadBitmap(this);
-        if (bitmap != null) {
-            setImageBitmap(bitmap);
-        } else {
-            if (StrongImageViewConstants.IS_DEBUG) {
-                Log.d(StrongImageViewConstants.TAG, "downloadBitmap, url = " + imageUrl);
-            }
-            loader.downloadBitmap(this);
-        }
+        BitmapLoader.getInstance().loadBitmap(this);
     }
 
     public int getMinWidth() {

@@ -11,7 +11,7 @@ import com.erhu.android.component.strongimageview.AbstractBitmapLoader;
  */
 public class BitmapLoader extends AbstractBitmapLoader {
 
-    private static AbstractBitmapLoader instance;
+    private static BitmapLoader instance;
 
     private BitmapLoader() {
     }
