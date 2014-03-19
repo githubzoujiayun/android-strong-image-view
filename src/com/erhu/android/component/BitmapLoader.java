@@ -46,7 +46,7 @@ public class BitmapLoader extends AbstractBitmapLoader {
 
             @Override
             public String dir() {
-                return StorageUtil.getInstance().getImgDir();
+                return StorageUtil.getInstance().makeImgDir("demo");
             }
         };
     }

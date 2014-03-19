@@ -22,7 +22,6 @@ public class StorageUtil {
     private HashMap<STORAGE_TYPE, File> storageLocations;
 
     private static final String STORAGE_ROOT = "strong_image_cache";
-    private String imgDir;
 
     /**
      * 存储类型 *
@@ -40,7 +39,7 @@ public class StorageUtil {
 
     private StorageUtil() {
         initStorageLocations();
-        initBizPathValues();
+
         if (isAvailable(STORAGE_TYPE.EXTERNAL_SDCARD)) {
             Log.d(TAG, String.format("external storage exist, path:%s", getPath(STORAGE_TYPE.EXTERNAL_SDCARD)));
         }
@@ -65,7 +64,6 @@ public class StorageUtil {
      * 存储是否存在
      *
      * @param st 存储类型 {@see STORAGE_TYPE}
-     * @return
      */
     public boolean isAvailable(STORAGE_TYPE st) {
         return storageLocations != null
@@ -84,7 +82,6 @@ public class StorageUtil {
      * 获取存储的可用容量 (M)
      *
      * @param st 存储类型 {@see STORAGE_TYPE}
-     * @return
      */
     public long getAvailableSize(STORAGE_TYPE st) {
         if (storageLocations == null) {
@@ -114,7 +111,6 @@ public class StorageUtil {
      * 获取存储的总容量 (M)
      *
      * @param st 存储类型 {@see STORAGE_TYPE}
-     * @return
      */
     public long getSize(STORAGE_TYPE st) {
         if (storageLocations == null) {
@@ -233,16 +229,6 @@ public class StorageUtil {
         }
     }
 
-    /*
-     * 初始化业务目录，如果存储地址更改，需要调用此方法
-     */
-    public void initBizPathValues() {
-        String pre = getPath().concat(File.separator).concat(STORAGE_ROOT).concat(File.separator);
-        makeDirIfNotExist(pre);
-        imgDir = pre.concat("album").concat(File.separator);
-        makeDirIfNotExist(imgDir);
-    }
-
     private void makeDirIfNotExist(String path) {
         File dir = new File(path);
         if (!dir.exists()) {
@@ -269,7 +255,11 @@ public class StorageUtil {
         return getPath(getCurrentUseStorage());
     }
 
-    public String getImgDir() {
-        return imgDir;
+    public String makeImgDir(String _dir_name) {
+        String pre = getPath().concat(File.separator).concat(STORAGE_ROOT).concat(File.separator);
+        makeDirIfNotExist(pre);
+        String img_dir = pre.concat(_dir_name).concat(File.separator);
+        makeDirIfNotExist(img_dir);
+        return img_dir;
     }
 }
