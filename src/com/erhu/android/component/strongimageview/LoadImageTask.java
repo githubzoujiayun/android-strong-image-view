@@ -11,26 +11,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 加载歌曲的任务
+ * very simple, u know.
  * <p/>
  * User: erhu
  * Date: 14-3-18
  * Time: 下午4:37
  */
-public class LoadImageTask implements Runnable {
+class LoadImageTask implements Runnable {
 
     private boolean canceled = false;
     private Handler handler;
     private StrongImageView strongImageView;
     private String fileName;
-
-    // concurrent Set :)
-    private static Set<String> diskCache = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
     // LruCache通过构造函数传入缓存值（KB）
@@ -76,6 +70,9 @@ public class LoadImageTask implements Runnable {
 
         // 无缓存数据，下载图片
         if (bitmap == null) {
+            if (StrongImageViewConstants.IS_DEBUG) {
+                Log.d(StrongImageViewConstants.TAG, "download image from web....");
+            }
             HttpUtils.downloadImg(strongImageView.getImageUrl(), fileName);
             bitmap = loadImageFromFileSystem(strongImageView, fileName);
         }
@@ -96,11 +93,11 @@ public class LoadImageTask implements Runnable {
 
         Bitmap bitmap = null;
 
-        String image_url = _strong_image_view.getImageUrl();
+        final String image_url = _strong_image_view.getImageUrl();
         int min_width = _strong_image_view.getMinWidth();
         int min_height = _strong_image_view.getMinHeight();
         try {
-            if (diskCache.contains(image_url)) {
+            if (DiskCache.INSTANCE.contains(image_url)) {
                 // 不用检查文件是否存在
                 bitmap = buildAdaptiveBitmapFromFilePath(_file_name, min_width, min_height);
                 lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
@@ -111,9 +108,10 @@ public class LoadImageTask implements Runnable {
                         Log.d(StrongImageViewConstants.TAG, "load image from local file");
                     }
                     bitmap = buildAdaptiveBitmapFromFilePath(_file_name, min_width, min_height);
-
-                    lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
-                    diskCache.add(image_url);
+                    if (bitmap != null) {
+                        lruImgCache.put(image_url, new SoftReference<Bitmap>(bitmap));
+                        DiskCache.INSTANCE.add(image_url);
+                    }
                 }
             }
         } catch (IllegalStateException e) {
@@ -130,6 +128,13 @@ public class LoadImageTask implements Runnable {
             return null;
         }
 
+        if (!new File(_file_path).exists()) {
+            if (StrongImageViewConstants.IS_DEBUG) {
+                Log.e(StrongImageViewConstants.TAG, "file not exists.");
+            }
+            return null;
+        }
+
         Bitmap bitmap = null;
 
         // 设置 inJustDecodeBounds = true, decodeFile时不分配内存空间，但可计算出原始图片的长度和宽度，
@@ -139,12 +144,9 @@ public class LoadImageTask implements Runnable {
         BitmapFactory.decodeFile(_file_path, opts);
         int sample_size = genSampleSizeByOptions(opts, _min_width, _min_height);
 
-        int max_try_loop = 10;
+        int max_try_loop = 3;
         while (max_try_loop-- >= 0) {
             try {
-                if (StrongImageViewConstants.IS_DEBUG) {
-                    //Log.d(StrongImageViewConstants.TAG, "Now, sample_size = " + sample_size);
-                }
                 BitmapFactory.Options options = buildBFOptions(sample_size);
                 bitmap = BitmapFactory.decodeFile(_file_path, options);
 
@@ -154,6 +156,9 @@ public class LoadImageTask implements Runnable {
                     }
                     sample_size *= 2;
                 } else {
+                    if (StrongImageViewConstants.IS_DEBUG) {
+                        Log.d(StrongImageViewConstants.TAG, "bitmap is ok, when sample_size = " + sample_size);
+                    }
                     break;
                 }
             } catch (OutOfMemoryError error) {
@@ -180,11 +185,11 @@ public class LoadImageTask implements Runnable {
                 sample_size *= 2;
             }
             if (StrongImageViewConstants.IS_DEBUG) {
-                /*
-                Log.d(StrongImageViewConstants.TAG, String.format("视图尺寸: {width:%d, height:%d}", _min_width, _min_height));
-                Log.d(StrongImageViewConstants.TAG, String.format("图片尺寸: {width:%d, height:%d}", _opts.outWidth, _opts.outHeight));
-                Log.d(StrongImageViewConstants.TAG, String.format("压缩比率: %d", sample_size));
-                */
+                if (sample_size > 2) {
+                    Log.d(StrongImageViewConstants.TAG, String.format("视图尺寸: {width:%d, height:%d}", _min_width, _min_height));
+                    Log.d(StrongImageViewConstants.TAG, String.format("图片尺寸: {width:%d, height:%d}", _opts.outWidth, _opts.outHeight));
+                    Log.d(StrongImageViewConstants.TAG, String.format("压缩比率: %d", sample_size));
+                }
             }
         }
         return sample_size;
@@ -201,6 +206,9 @@ public class LoadImageTask implements Runnable {
         this.canceled = true;
     }
 
+    /**
+     * 这个方法被折叠，效率太低
+     */
     private Bitmap buildAdaptiveBitmapFromImgUrl(final String _image_url, int minWidth, int minHeight) {
         InputStream input_stream = HttpUtils.getStreamFromURL(_image_url);
         if (input_stream == null) {

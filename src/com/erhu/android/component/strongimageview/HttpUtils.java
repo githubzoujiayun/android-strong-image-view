@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.logging.Logger;
 
 /**
  * HttpUtils
@@ -22,7 +21,7 @@ import java.util.logging.Logger;
  * Date: 14-2-23
  * Time: 下午8:46
  */
-public class HttpUtils {
+class HttpUtils {
 
     public static InputStream getStreamFromURL(String imageURL) {
         try {

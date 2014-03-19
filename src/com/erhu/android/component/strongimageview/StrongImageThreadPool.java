@@ -10,9 +10,10 @@ import java.util.concurrent.Executors;
  * Date: 14-3-1
  * Time: 下午4:24
  */
-public class StrongImageThreadPool {
+class StrongImageThreadPool {
 
     private static ExecutorService threadPool;
+    private static ExecutorService singleThreadPool;
 
     public static ExecutorService getExecutor() {
         if (threadPool == null) {
@@ -34,4 +35,32 @@ public class StrongImageThreadPool {
 
         return threadPool;
     }
+
+    public static ExecutorService getSingleThreadExecutor() {
+        if (singleThreadPool == null) {
+            synchronized (StrongImageThreadPool.class) {
+                if (singleThreadPool == null) {
+                    singleThreadPool = Executors.newSingleThreadExecutor();
+                }
+            }
+        } else {
+            if (singleThreadPool.isShutdown()) {
+                synchronized (StrongImageThreadPool.class) {
+                    if (singleThreadPool.isShutdown()) {
+                        singleThreadPool = Executors.newSingleThreadExecutor();
+                    }
+                }
+            }
+        }
+
+        return singleThreadPool;
+    }
+
+
+    public static void shutdown() {
+        threadPool.shutdown();
+        singleThreadPool.shutdown();
+    }
+
+    ;
 }

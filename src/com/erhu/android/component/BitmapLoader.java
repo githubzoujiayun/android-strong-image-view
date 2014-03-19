@@ -1,6 +1,8 @@
 package com.erhu.android.component;
 
 import com.erhu.android.component.strongimageview.AbstractBitmapLoader;
+import com.erhu.android.component.strongimageview.ImageCacheDirStrategy;
+import com.erhu.android.component.strongimageview.ImageCacheNameStrategy;
 
 /**
  * BitmapLoader
@@ -25,12 +27,28 @@ public class BitmapLoader extends AbstractBitmapLoader {
 
     @Override
     protected void setImageCacheNameStrategy() {
-        super.imgNameStrategy = new ImageCacheNameStrategyImpl();
+        // URL 与 缓存文件名称的对应关系
+        super.imgNameStrategy = new ImageCacheNameStrategy() {
+
+            @Override
+            public String getName(String _url) {
+                return String.valueOf(_url.hashCode());
+            }
+        };
     }
 
     @Override
     protected void setImageCacheDirStrategy() {
-        super.imgCacheDirStrategy = new ImageCacheDirStrategyImpl();
+        /**
+         * 图片存储位置
+         */
+        super.imgCacheDirStrategy = new ImageCacheDirStrategy() {
+
+            @Override
+            public String dir() {
+                return StorageUtil.getInstance().getImgDir();
+            }
+        };
     }
 
 }

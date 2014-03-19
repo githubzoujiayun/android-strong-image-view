@@ -16,10 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class AbstractBitmapLoader {
 
-    private static final String TAG = "AbstractBitmapLoader";
-
     private static final int JOB_SIZE = 20;
-
 
     private final Map<String, LoadImageTask> jobs;
     private static String dir;
@@ -27,7 +24,6 @@ public abstract class AbstractBitmapLoader {
     protected ImageCacheDirStrategy imgCacheDirStrategy;
 
     protected abstract void setImageCacheNameStrategy();
-
     protected abstract void setImageCacheDirStrategy();
 
     public AbstractBitmapLoader() {
@@ -39,7 +35,7 @@ public abstract class AbstractBitmapLoader {
     }
 
     public void loadBitmap(final StrongImageView _strong_image_view) {
-        String key = _strong_image_view.getImageUrl();
+        final String key = _strong_image_view.getImageUrl();
         if (jobs.containsKey(key)) {
             jobs.get(key).cancel();
         }
@@ -55,6 +51,7 @@ public abstract class AbstractBitmapLoader {
                 }
             }
         }, _strong_image_view, getFileName(_strong_image_view));
+
         jobs.put(_strong_image_view.getImageUrl(), task);
 
         StrongImageThreadPool.getExecutor().execute(task);
@@ -62,5 +59,9 @@ public abstract class AbstractBitmapLoader {
 
     private String getFileName(StrongImageView _strong_image_view) {
         return dir + imgNameStrategy.getName(_strong_image_view.getImageUrl());
+    }
+
+    public String getDir() {
+        return dir;
     }
 }
