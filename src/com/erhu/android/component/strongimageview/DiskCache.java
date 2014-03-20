@@ -1,7 +1,6 @@
 package com.erhu.android.component.strongimageview;
 
 import android.util.Log;
-import com.erhu.android.component.BitmapLoader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
@@ -21,12 +20,10 @@ import java.util.concurrent.TimeUnit;
  */
 enum DiskCache {
 
-    INSTANCE(BitmapLoader.getInstance().getDir(), BitmapLoader.getInstance().imgNameStrategy);
+    INSTANCE;
 
-    private String dir;
-    private ImageCacheNameStrategy imgNameStrategy;
-
-    private static final int SIZE = 10;
+    // 缓存时，图片名称命名规则
+    private ImageCacheNameStrategy cacheFileNameStrategy = StrongImageViewConfig.imgCacheFileNameStrategy;
 
     // concurrent Set :)
     // 删除冗余图片时，快速定位图片是否在缓存中。
@@ -35,12 +32,10 @@ enum DiskCache {
     private Set<String> diskCacheFileNameSet = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     // 用于存储，当缓存图片数超标时，从链表尾部开始删除。
-    private List<CacheEntry> diskCacheList = Collections.synchronizedList(new ArrayList<CacheEntry>(SIZE));
+    private List<CacheEntry> diskCacheList = Collections.synchronizedList(
+            new ArrayList<CacheEntry>(StrongImageViewConfig.CACHE_IMG_FILE_COUNT));
 
-    private DiskCache(String _dir, ImageCacheNameStrategy _strategy) {
-        this.dir = _dir;
-        this.imgNameStrategy = _strategy;
-
+    private DiskCache() {
         if (dumpFile().exists()) {
             // 从DUMP文件读取数据（1分钟后，只一次）
             Executors.newScheduledThreadPool(1).schedule(
@@ -73,7 +68,8 @@ enum DiskCache {
                     public void run() {
                         // 删除引用
                         Iterator iterator = diskCacheList.iterator();
-                        while (diskCacheList.size() > SIZE && iterator.hasNext()) {
+                        while (diskCacheList.size() > StrongImageViewConfig.CACHE_IMG_FILE_COUNT
+                                && iterator.hasNext()) {
                             int last_index = diskCacheList.size() - 1;
                             removeEntry(diskCacheList.get(last_index));
 
@@ -85,6 +81,7 @@ enum DiskCache {
                         }
 
                         // 保存引用数据到文件中
+                        // todo 使用jackson，大材小用。
                         ObjectMapper mapper = new ObjectMapper();
                         try {
                             mapper.writeValue(dumpFile(), diskCacheList);
@@ -94,12 +91,14 @@ enum DiskCache {
 
                         // 获取缓存图片文件夹中所有的图片
                         // 下划线开头的文件是日志文件或者不自动管理的图片
-                        final File[] file_array = new File(dir).listFiles(new FilenameFilter() {
-                            @Override
-                            public boolean accept(File dir, String filename) {
-                                return !filename.startsWith("_");
-                            }
-                        });
+                        final File[] file_array = new File(StrongImageViewConfig.dir).listFiles(
+                                new FilenameFilter() {
+                                    @Override
+                                    public boolean accept(File dir, String filename) {
+                                        return !filename.startsWith("_");
+                                    }
+                                }
+                        );
 
                         // 删除物理文件
                         for (File f : file_array) {
@@ -112,7 +111,7 @@ enum DiskCache {
                             }
                         }
                     }
-                }, 20, 40, TimeUnit.SECONDS);
+                }, 2, 4, TimeUnit.MINUTES);
     }
 
     // synchronized 保证 map 和 list 同步；
@@ -128,18 +127,19 @@ enum DiskCache {
 
     public synchronized void removeEntry(CacheEntry entry) {
         diskCacheUrlSet.remove(entry.url);
-        diskCacheFileNameSet.remove(imgNameStrategy.getName(entry.url));
+        diskCacheFileNameSet.remove(cacheFileNameStrategy.getName(entry.url));
     }
 
     public synchronized void addEntry(CacheEntry entry) {
         if (!diskCacheUrlSet.contains(entry.url)) {
             diskCacheList.add(entry);
             diskCacheUrlSet.add(entry.url);
-            diskCacheFileNameSet.add(imgNameStrategy.getName(entry.url));
+            diskCacheFileNameSet.add(cacheFileNameStrategy.getName(entry.url));
         }
     }
 
     private File dumpFile() {
+        String dir = StrongImageViewConfig.dir;
         return new File(dir + "_" + dir.hashCode() + ".data");
     }
 

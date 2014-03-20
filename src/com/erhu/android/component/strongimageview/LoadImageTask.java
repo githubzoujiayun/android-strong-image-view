@@ -21,6 +21,9 @@ import java.lang.ref.SoftReference;
  */
 class LoadImageTask implements Runnable {
 
+    // 最多执行缩小操作的次数
+    private static final int MAX_TRY_LOOP = 10;
+
     private boolean canceled = false;
     private Handler handler;
     private StrongImageView strongImageView;
@@ -35,16 +38,16 @@ class LoadImageTask implements Runnable {
                 protected int sizeOf(String key, SoftReference<Bitmap> value) {
                     Bitmap bitmap = value.get();
                     if (bitmap != null) {
-                        return bitmap.getByteCount() / 1024;
+                        return bitmap.getHeight() * bitmap.getRowBytes() / 1024;
                     }
                     return 0;
                 }
             };
 
-    public LoadImageTask(Handler _handler, StrongImageView _strong_image_view, String file_name) {
+    public LoadImageTask(Handler _handler, StrongImageView _strong_image_view) {
         handler = _handler;
         strongImageView = _strong_image_view;
-        fileName = file_name;
+        fileName = getFileName(_strong_image_view);
     }
 
     @Override
@@ -144,7 +147,7 @@ class LoadImageTask implements Runnable {
         BitmapFactory.decodeFile(_file_path, opts);
         int sample_size = genSampleSizeByOptions(opts, _min_width, _min_height);
 
-        int max_try_loop = 3;
+        int max_try_loop = MAX_TRY_LOOP;
         while (max_try_loop-- >= 0) {
             try {
                 BitmapFactory.Options options = buildBFOptions(sample_size);
@@ -154,7 +157,7 @@ class LoadImageTask implements Runnable {
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(StrongImageViewConstants.TAG, "bitmap = null when sample_size = " + sample_size);
                     }
-                    sample_size *= 2;
+                    sample_size = incSampleSize(sample_size);
                 } else {
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(StrongImageViewConstants.TAG, "bitmap is ok, when sample_size = " + sample_size);
@@ -165,7 +168,7 @@ class LoadImageTask implements Runnable {
                 if (StrongImageViewConstants.IS_DEBUG) {
                     Log.d(StrongImageViewConstants.TAG, String.format("OutOfMemory error, when sample_size = %d, sample_size *= 2 and tray again.", sample_size));
                 }
-                sample_size *= 2;
+                sample_size = incSampleSize(sample_size);
             }
         }
 
@@ -177,12 +180,12 @@ class LoadImageTask implements Runnable {
 
         // 如果用户设置了最小宽和最小高
         if (_min_width != 0 && _min_height != 0) {
-            while (_opts.outWidth / _min_width >= (sample_size * 2)
-                    && _opts.outHeight / _min_height >= (sample_size * 2)) {
+            while (_opts.outWidth / _min_width >= incSampleSize(sample_size)
+                    && _opts.outHeight / _min_height >= incSampleSize(sample_size)) {
                 if (StrongImageViewConstants.IS_DEBUG) {
                     Log.d(StrongImageViewConstants.TAG, "bitmap is too large, when sample_size = " + sample_size + ", enlarge it.");
                 }
-                sample_size *= 2;
+                sample_size = incSampleSize(sample_size);
             }
             if (StrongImageViewConstants.IS_DEBUG) {
                 if (sample_size > 2) {
@@ -246,7 +249,7 @@ class LoadImageTask implements Runnable {
                         // todo
                         // not good strategy, but how to copy the stream? I failed.
                         input_stream = HttpUtils.getStreamFromURL(_image_url);
-                        sample_size *= 2;
+                        sample_size = incSampleSize(sample_size);
                     } else {
                         break;
                     }
@@ -254,7 +257,7 @@ class LoadImageTask implements Runnable {
                     if (StrongImageViewConstants.IS_DEBUG) {
                         Log.d(StrongImageViewConstants.TAG, String.format("OutOfMemory error, when sample_size = %d, sample_size *= 2 and tray again.", sample_size));
                     }
-                    sample_size *= 2;
+                    sample_size = incSampleSize(sample_size);
                 }
             }
         } catch (IOException e) {
@@ -270,5 +273,25 @@ class LoadImageTask implements Runnable {
         }
         return bitmap;
     }
+
+    private int incSampleSize(int _old_size) {
+        // 加载速度优先
+        //return _old_size * 2;
+
+        // 图片精度优先
+        return _old_size + 1;
+    }
+
+    private String getFileName(StrongImageView _strong_image_view) {
+        String file_name = StrongImageViewConfig.imgCacheFileNameStrategy.getName(_strong_image_view.getImageUrl());
+
+        // 对于不自动删除的图片，名称前加下划线
+        // todo to improve.
+        if (!_strong_image_view.autoDel()) {
+            file_name = "_" + file_name;
+        }
+        return StrongImageViewConfig.dir + file_name;
+    }
+
 
 }

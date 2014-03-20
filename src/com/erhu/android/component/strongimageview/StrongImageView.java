@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.ImageView;
-import com.erhu.android.component.BitmapLoader;
 import com.erhu.android.component.R;
 
 /**
@@ -35,6 +34,8 @@ public class StrongImageView extends ImageView {
         super(context, attrs, defStyle);
         TypedArray array = context.getTheme().obtainStyledAttributes(attrs, R.styleable.StrongImageView, defStyle, 0);
         int count = array.getIndexCount();
+        autoDelFile = true;
+
         for (int i = 0; i < count; i++) {
             int attr = array.getIndex(i);
             if (attr == R.styleable.StrongImageView_auto_del) {
@@ -44,7 +45,7 @@ public class StrongImageView extends ImageView {
         }
     }
 
-    public void setImageUrl(String _url) {
+    private void setImageUrl(String _url) {
         imageUrl = _url;
     }
 
@@ -58,7 +59,7 @@ public class StrongImageView extends ImageView {
     }
 
     private void loadImage() {
-        BitmapLoader.getInstance().loadBitmap(this);
+        BitmapLoader.INSTANCE.loadBitmap(this);
     }
 
     public int getMinWidth() {
