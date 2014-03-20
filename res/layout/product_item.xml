@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:erhu="http://schemas.android.com/apk/res/com.erhu.android.component"
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="80dp">
@@ -18,5 +19,6 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:minWidth="400dp"
+            erhu:auto_del="false"
             android:minHeight="300dp"/>
 </LinearLayout>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="StrongImageView">
+        <!-- 是否自动删除图片 -->
+        <attr name="auto_del" format="boolean"/>
+    </declare-styleable>
+</resources>

@@ -1,9 +1,11 @@
 package com.erhu.android.component.strongimageview;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import com.erhu.android.component.BitmapLoader;
+import com.erhu.android.component.R;
 
 /**
  * StrongImageView
@@ -17,6 +19,7 @@ public class StrongImageView extends ImageView {
     private String imageUrl;
     private int minWidth;
     private int minHeight;
+    private boolean autoDelFile;
 
     public StrongImageView(Context context) {
         super(context);
@@ -30,6 +33,15 @@ public class StrongImageView extends ImageView {
 
     public StrongImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        TypedArray array = context.getTheme().obtainStyledAttributes(attrs, R.styleable.StrongImageView, defStyle, 0);
+        int count = array.getIndexCount();
+        for (int i = 0; i < count; i++) {
+            int attr = array.getIndex(i);
+            if (attr == R.styleable.StrongImageView_auto_del) {
+                // 默认自动删除
+                autoDelFile = array.getBoolean(attr, true);
+            }
+        }
     }
 
     public void setImageUrl(String _url) {
@@ -55,5 +67,9 @@ public class StrongImageView extends ImageView {
 
     public int getMinHeight() {
         return minHeight;
+    }
+
+    public boolean autoDel() {
+        return autoDelFile;
     }
 }

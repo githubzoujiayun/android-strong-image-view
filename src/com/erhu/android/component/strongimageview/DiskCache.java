@@ -61,9 +61,6 @@ enum DiskCache {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            for (CacheEntry ce : diskCacheList) {
-                                Log.d(StrongImageViewConstants.TAG, ce.getUrl() + " _ 2");
-                            }
                         }
                     }, 1, TimeUnit.SECONDS
             );
@@ -90,15 +87,13 @@ enum DiskCache {
                         // 保存引用数据到文件中
                         ObjectMapper mapper = new ObjectMapper();
                         try {
-                            for (CacheEntry ce : diskCacheList) {
-                                Log.d(StrongImageViewConstants.TAG, ce.getUrl() + " _ 3");
-                            }
                             mapper.writeValue(dumpFile(), diskCacheList);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
-                        // 获取缓存图片文件夹中所有的图片(非下划线开始)
+                        // 获取缓存图片文件夹中所有的图片
+                        // 下划线开头的文件是日志文件或者不自动管理的图片
                         final File[] file_array = new File(dir).listFiles(new FilenameFilter() {
                             @Override
                             public boolean accept(File dir, String filename) {
@@ -125,10 +120,6 @@ enum DiskCache {
         CacheEntry entry = new CacheEntry();
         entry.url = url;
         addEntry(entry);
-
-        for (CacheEntry ce : diskCacheList) {
-            Log.d(StrongImageViewConstants.TAG, ce.getUrl() + " _ 4");
-        }
     }
 
     public synchronized boolean contains(String url) {

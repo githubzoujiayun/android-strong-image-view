@@ -58,7 +58,12 @@ public abstract class AbstractBitmapLoader {
     }
 
     private String getFileName(StrongImageView _strong_image_view) {
-        return dir + imgNameStrategy.getName(_strong_image_view.getImageUrl());
+        String file_name = imgNameStrategy.getName(_strong_image_view.getImageUrl());
+        // 对于不自动删除的图片，名称前加下划线
+        if (!_strong_image_view.autoDel()) {
+            file_name = "_" + file_name;
+        }
+        return dir + file_name;
     }
 
     public String getDir() {
