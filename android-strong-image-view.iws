@@ -118,8 +118,8 @@
       <file leaf-file-name="LoadImageTask.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/erhu/android/component/strongimageview/LoadImageTask.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.39805827" vertical-offset="4066" max-vertical-offset="5082">
-              <caret line="206" column="0" selection-start-line="206" selection-start-column="0" selection-end-line="206" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0776699" vertical-offset="4066" max-vertical-offset="5082">
+              <caret line="197" column="9" selection-start-line="197" selection-start-column="9" selection-end-line="197" selection-end-column="9" />
               <folding>
                 <element signature="e#887#918#0" expanded="true" />
                 <element signature="method#buildAdaptiveBitmapFromImgUrl#0;class#LoadImageTask#0" expanded="false" />
@@ -660,7 +660,7 @@
       <workItem from="1395201401048" duration="20611000" />
       <workItem from="1395284078179" duration="7225000" />
       <workItem from="1395308980762" duration="85000" />
-      <workItem from="1395318951758" duration="1770000" />
+      <workItem from="1395318951758" duration="2112000" />
     </task>
     <task id="LOCAL-00001" summary="添加本地图片文件自动管理功能；&#10;">
       <created>1395221550250</created>
@@ -686,7 +686,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="38577000" />
+    <option name="totallyTimeSpent" value="38919000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1280" height="774" extended-state="6" />
@@ -1129,8 +1129,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/erhu/android/component/strongimageview/LoadImageTask.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.39805827" vertical-offset="4066" max-vertical-offset="5082">
-          <caret line="206" column="0" selection-start-line="206" selection-start-column="0" selection-end-line="206" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0776699" vertical-offset="4066" max-vertical-offset="5082">
+          <caret line="197" column="9" selection-start-line="197" selection-start-column="9" selection-end-line="197" selection-end-column="9" />
           <folding>
             <element signature="e#887#918#0" expanded="true" />
             <element signature="method#buildAdaptiveBitmapFromImgUrl#0;class#LoadImageTask#0" expanded="false" />
