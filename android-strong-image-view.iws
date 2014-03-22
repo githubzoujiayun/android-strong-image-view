@@ -24,9 +24,7 @@
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="app: com.erhu.android.component" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7f4d139-b93b-4925-b674-e17a9d846b0f" name="Default" comment="重构：1、删除模板方法模式；2、减少图片压缩比例。&#10;">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/com/erhu/android/component/strongimageview/StrongImageViewHelper.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/erhu/android/component/strongimageview/LoadImageTask.java" afterPath="$PROJECT_DIR$/src/com/erhu/android/component/strongimageview/LoadImageTask.java" />
+    <list default="true" id="b7f4d139-b93b-4925-b674-e17a9d846b0f" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/android-strong-image-view.iws" afterPath="$PROJECT_DIR$/android-strong-image-view.iws" />
     </list>
     <ignored path="android-strong-image-view.iws" />
@@ -658,7 +656,7 @@
       <workItem from="1395284078179" duration="7225000" />
       <workItem from="1395308980762" duration="85000" />
       <workItem from="1395318951758" duration="2112000" />
-      <workItem from="1395496564254" duration="174000" />
+      <workItem from="1395496564254" duration="277000" />
     </task>
     <task id="LOCAL-00001" summary="添加本地图片文件自动管理功能；&#10;">
       <created>1395221550250</created>
@@ -680,11 +678,15 @@
       <created>1395322916103</created>
       <updated>1395322916104</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="重构&#10;">
+      <created>1395496753432</created>
+      <updated>1395496753432</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="39093000" />
+    <option name="totallyTimeSpent" value="39196000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1280" height="774" extended-state="0" />
@@ -702,6 +704,7 @@
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Build Variants" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32597402" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Android" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32337663" sideWeight="0.49967596" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.19701879" sideWeight="0.5006435" order="0" side_tool="true" content_ui="tabs" />
@@ -712,7 +715,6 @@
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32337663" sideWeight="0.49967596" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32987553" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3230994" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32597402" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.32987687" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -736,7 +738,8 @@
     <MESSAGE value="持久化最近访问的图片文件；&#10;" />
     <MESSAGE value="可配置是否自动删除图片；&#10;" />
     <MESSAGE value="重构：1、删除模板方法模式；2、减少图片压缩比例。&#10;" />
-    <option name="LAST_COMMIT_MESSAGE" value="重构：1、删除模板方法模式；2、减少图片压缩比例。&#10;" />
+    <MESSAGE value="重构&#10;" />
+    <option name="LAST_COMMIT_MESSAGE" value="重构&#10;" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
