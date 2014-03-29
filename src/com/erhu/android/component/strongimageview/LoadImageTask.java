@@ -7,6 +7,7 @@ import android.util.Log;
 import android.util.LruCache;
 
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 
 /**
  * very simple, u know.
@@ -19,6 +20,7 @@ class LoadImageTask implements Runnable {
 
     private boolean canceled = false;
     private Handler handler;
+    private WeakReference<StrongImageView> ref;
     private StrongImageView strongImageView;
 
     // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
@@ -38,7 +40,8 @@ class LoadImageTask implements Runnable {
 
     public LoadImageTask(Handler _handler, StrongImageView _strong_image_view) {
         handler = _handler;
-        strongImageView = _strong_image_view;
+        ref = new WeakReference<StrongImageView>(_strong_image_view);
+        strongImageView = ref.get();
     }
 
     @Override
