@@ -20,7 +20,6 @@ class LoadImageTask implements Runnable {
 
     private boolean canceled = false;
     private Handler handler;
-    private WeakReference<StrongImageView> ref;
     private StrongImageView strongImageView;
 
     // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
@@ -40,7 +39,7 @@ class LoadImageTask implements Runnable {
 
     public LoadImageTask(Handler _handler, StrongImageView _strong_image_view) {
         handler = _handler;
-        ref = new WeakReference<StrongImageView>(_strong_image_view);
+        WeakReference<StrongImageView> ref = new WeakReference<StrongImageView>(_strong_image_view);
         strongImageView = ref.get();
     }
 
