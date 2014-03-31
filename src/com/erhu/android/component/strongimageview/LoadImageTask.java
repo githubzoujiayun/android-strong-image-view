@@ -20,7 +20,7 @@ class LoadImageTask implements Runnable {
 
     private boolean canceled = false;
     private Handler handler;
-    private StrongImageView strongImageView;
+    private WeakReference<StrongImageView> ref;
 
     // 可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
     // LruCache通过构造函数传入缓存值（KB）
@@ -39,19 +39,19 @@ class LoadImageTask implements Runnable {
 
     public LoadImageTask(Handler _handler, StrongImageView _strong_image_view) {
         handler = _handler;
-        WeakReference<StrongImageView> ref = new WeakReference<StrongImageView>(_strong_image_view);
-        strongImageView = ref.get();
+        ref = new WeakReference<StrongImageView>(_strong_image_view);
     }
 
     @Override
     public void run() {
-        if (strongImageView == null || canceled) {
+        StrongImageView strong_image_view = ref.get();
+        if (strong_image_view == null || canceled) {
             return;
         }
 
         Bitmap bitmap;
         // in cache
-        SoftReference<Bitmap> reference = lruImgCache.get(strongImageView.getImageUrl());
+        SoftReference<Bitmap> reference = lruImgCache.get(strong_image_view.getImageUrl());
 
         if (reference != null) {
             bitmap = reference.get();
@@ -61,7 +61,7 @@ class LoadImageTask implements Runnable {
                 }
             }
         } else {
-            bitmap = StrongImageViewHelper.getBitmapFromFileByView(strongImageView, lruImgCache);
+            bitmap = StrongImageViewHelper.getBitmapFromFileByView(strong_image_view, lruImgCache);
         }
 
         // 无缓存数据，下载图片
@@ -69,8 +69,8 @@ class LoadImageTask implements Runnable {
             if (StrongImageViewConstants.IS_DEBUG) {
                 Log.d(StrongImageViewConstants.TAG, "download image from web....");
             }
-            HttpUtils.downloadImg(strongImageView.getImageUrl(), StrongImageViewHelper.getFileNameByView(strongImageView));
-            bitmap = StrongImageViewHelper.getBitmapFromFileByView(strongImageView, lruImgCache);
+            HttpUtils.downloadImg(strong_image_view.getImageUrl(), StrongImageViewHelper.getFileNameByView(strong_image_view));
+            bitmap = StrongImageViewHelper.getBitmapFromFileByView(strong_image_view, lruImgCache);
         }
 
         // send msg
